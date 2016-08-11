@@ -415,30 +415,9 @@ func (c *ServerCommand) Run(args []string) int {
 
 	handler := vaulthttp.Handler(core)
 
-	clusterListenerSetupFunc := func() ([]net.Listener, http.Handler, error) {
-		ret := make([]net.Listener, 0, len(lns))
-		// Loop over the existing listeners and start listeners on appropriate ports
-		for _, ln := range lns {
-			tcpAddr, ok := ln.Addr().(*net.TCPAddr)
-			if !ok {
-				c.logger.Printf("[TRACE] command/server: %s not a candidate for cluster request handling", ln.Addr().String())
-				continue
-			}
-			c.logger.Printf("[TRACE] command/server: %s is a candidate for cluster request handling at addr %s and port %d", tcpAddr.String(), tcpAddr.IP.String(), tcpAddr.Port+1)
-
-			ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", tcpAddr.IP.String(), tcpAddr.Port+1))
-			if err != nil {
-				return nil, nil, err
-			}
-			ret = append(ret, ln)
-		}
-
-		return ret, handler, nil
-	}
-
 	// This needs to happen before we first unseal, so before we trigger dev
 	// mode if it's set
-	core.SetClusterListenerSetupFunc(clusterListenerSetupFunc)
+	core.SetClusterListenerSetupFunc(vaulthttp.WrapListenersForClustering(lns, handler, c.logger))
 
 	// If we're in dev mode, then initialize the core
 	if dev {

@@ -516,7 +516,8 @@ func (c *Core) ForwardRequest(req *http.Request) (*http.Response, error) {
 
 	freq, err := requestutil.GenerateForwardedRequest(req, c.requestForwardingConnection.clusterAddr)
 	if err != nil {
-		return nil, err
+		c.logger.Printf("[ERR] core/ForwardRequest: error creating forwarded request: %v", err)
+		return nil, fmt.Errorf("error creating forwarding request")
 	}
 
 	return c.requestForwardingConnection.Do(freq)

@@ -1448,3 +1448,7 @@ func (c *Core) SealAccess() *SealAccess {
 	sa.SetSeal(c.seal)
 	return sa
 }
+
+func (c *Core) Logger() *log.Logger {
+	return c.logger
+}
